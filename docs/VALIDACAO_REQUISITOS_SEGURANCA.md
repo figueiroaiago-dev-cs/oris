@@ -16,7 +16,7 @@ Detalhe de cada achado: `docs/SEGURANCA.md` (SEC-016 a SEC-022).
 | MFA | **Não atende** | SEC-019, pendente (SR2) |
 | HTTPS/HSTS/redirecionamento | **Atende na AWS** (Caddy + Let's Encrypt; validado no servidor real) | SEC-020, `docs/AWS_DEPLOY.md` |
 | Retenção de 1 ano | **Política documentada** (a aplicação nunca apaga; expurgo é do DBA) | `docs/SEGURANCA.md` |
-| Criptografia em repouso do MySQL | **Fora da aplicação** (ambiente de hospedagem) | SEC-022 |
+| Criptografia em repouso do MySQL | **Atende na AWS** (disco EBS criptografado, confirmado no console); fora da aplicação | SEC-022 |
 
 ## Evidências na AWS (10/11/2026)
 

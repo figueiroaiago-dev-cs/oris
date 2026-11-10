@@ -38,7 +38,7 @@ Abrir `https://<ORIS_DOMAIN>`. A primeira emissão do certificado leva ~1 minuto
 
 - O **Learner Lab desliga o servidor** ao fim da sessão (~4 h). Ao religar, o IP elástico e os dados continuam; os contêineres sobem sozinhos (`restart: unless-stopped`).
 - Os usuários `@oris.example` usam a senha de `ORIS_DEMO_SENHA`, nunca a do repositório.
-- SSH aberto para o mundo (porta 22) é aceitável só durante o laboratório; restringir ao seu IP depois.
+- O SSH foi restringido ao serviço EC2 Instance Connect; se a conexão pelo navegador deixar de funcionar, confira a faixa de IP da região na documentação da AWS.
 
 ## Validação da implantação (10/11/2026)
 
@@ -46,7 +46,9 @@ Abrir `https://<ORIS_DOMAIN>`. A primeira emissão do certificado leva ~1 minuto
 - HTTPS com HSTS; senha pública dos usuários demo recusada; login falho registrado na auditoria.
 - S3: bucket privado com versionamento e SSE-S3; exportação pelo ORIS gerou URL pré-assinada; acesso direto ao objeto retornou `AccessDenied`.
 - LDAP real: `sincronizar-ldap` criou 4 usuários e a repetição não alterou nada. OIDC real: login SSO como ADMINISTRADOR e GESTOR contra o Keycloak.
-- Pendente: restringir o SSH; testar o religamento do servidor após o fim da sessão do laboratório.
+- Religamento testado (End Lab -> Start Lab): o servidor voltou em ~3 min, com dados preservados e SSO funcionando. Ligar o lab ~10 min antes de apresentar.
+- SSH restrito à faixa do EC2 Instance Connect (18.206.107.24/29); HTTP/HTTPS abertos ao mundo; banco, LDAP e Keycloak sem porta pública.
+- Disco EBS criptografado (confirmado no console).
 
 ## LDAP e OIDC reais (Requisito 3 do professor)
 
