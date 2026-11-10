@@ -90,6 +90,25 @@ def carregar_seed():
         con.commit()
         log(f"{seed} carregado.")
     con.close()
+    trocar_senha_demo()
+
+
+def trocar_senha_demo():
+    """Se ORIS_DEMO_SENHA existir, os usuarios de demonstracao (@oris.example) passam a usar
+    essa senha em vez da senha publica do repositorio. Obrigatorio em hospedagem na internet."""
+    senha = os.environ.get("ORIS_DEMO_SENHA", "")
+    if not senha:
+        return
+    sys.path.insert(0, str(RAIZ))
+    from app.utils.security import gerar_hash_senha
+
+    con = conectar()
+    with con.cursor() as cur:
+        cur.execute("UPDATE usuarios SET senha_hash = %s WHERE email LIKE %s",
+                    (gerar_hash_senha(senha), "%@oris.example"))
+    con.commit()
+    con.close()
+    log("senha dos usuarios de demonstracao trocada por ORIS_DEMO_SENHA.")
 
 
 def main():

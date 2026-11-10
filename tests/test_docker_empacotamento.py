@@ -50,3 +50,44 @@ def test_senhas_do_compose_sao_sobrescreviveis_por_variavel():
     texto = (RAIZ / "docker-compose.yml").read_text(encoding="utf-8")
     senhas = re.findall(r"PASSWORD:\s*(\S+)", texto)
     assert senhas and all(x.startswith("${") for x in senhas)
+
+
+def test_aws_compose_nao_tem_segredo_padrao_e_so_o_caddy_publica_portas():
+    texto = (RAIZ / "docker-compose.aws.yml").read_text(encoding="utf-8")
+    for var in ("DB_PASSWORD", "DB_ROOT_PASSWORD", "SECRET_KEY", "ORIS_DEMO_SENHA", "ORIS_DOMAIN"):
+        assert f"${{{var}:?" in texto, f"{var} deve ser obrigatoria (sem valor padrao)"
+    assert 'SESSION_COOKIE_SECURE: "true"' in texto
+    app_bloco = texto.split("  app:")[1].split("  caddy:")[0]
+    db_bloco = texto.split("  db:")[1].split("  app:")[0]
+    assert "ports:" not in app_bloco and "ports:" not in db_bloco
+    assert '"443:443"' in texto
+
+
+def test_caddyfile_tem_hsts():
+    assert "Strict-Transport-Security" in (RAIZ / "docker" / "Caddyfile").read_text(encoding="utf-8")
+
+
+def _app_com_proxies(n):
+    from app import create_app
+    from config import TestingConfig
+
+    class Cfg(TestingConfig):
+        TRUSTED_PROXY_COUNT = n
+
+    app = create_app(Cfg)
+
+    @app.route("/_ip")
+    def _ip():
+        from flask import request
+
+        return request.remote_addr
+
+    return app
+
+
+def test_proxyfix_so_confia_no_cabecalho_com_proxy_confiavel_configurado():
+    cab = {"X-Forwarded-For": "198.51.100.77"}
+    sem = _app_com_proxies(0).test_client().get("/_ip", headers=cab, environ_overrides={"REMOTE_ADDR": "10.0.0.5"})
+    com = _app_com_proxies(1).test_client().get("/_ip", headers=cab, environ_overrides={"REMOTE_ADDR": "10.0.0.5"})
+    assert sem.get_data(as_text=True) == "10.0.0.5"      # cabecalho forjavel e ignorado
+    assert com.get_data(as_text=True) == "198.51.100.77"  # proxy confiavel: IP real do usuario
