@@ -299,7 +299,7 @@ END $$
 -- continuam funcionando.
 -- Limite conhecido: TRUNCATE e DROP TABLE nao disparam triggers. Por isso o
 -- usuario do banco usado pelo ORIS nao deve ter os privilegios DROP, ALTER
--- nem TRIGGER (ver docs/SEGURANCA.md, SEC-014).
+-- nem TRIGGER (ver docs/SEGURANCA.md, SEC-017).
 
 DROP TRIGGER IF EXISTS trg_auditorias_bu $$
 
