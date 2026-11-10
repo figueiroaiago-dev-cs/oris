@@ -46,3 +46,26 @@ Abrir `https://<ORIS_DOMAIN>`. A primeira emissão do certificado leva ~1 minuto
 - HTTPS com HSTS; senha pública dos usuários demo recusada; login falho registrado na auditoria.
 - S3: bucket privado com versionamento e SSE-S3; exportação pelo ORIS gerou URL pré-assinada; acesso direto ao objeto retornou `AccessDenied`.
 - Pendente: LDAP e OIDC reais; restringir o SSH; testar o religamento do servidor após o fim da sessão do laboratório.
+
+## LDAP e OIDC reais (Requisito 3 do professor)
+
+Acrescenta **OpenLDAP** (STARTTLS com certificado de uma CA própria; a app valida o certificado) e **Keycloak** (OIDC com Authorization Code + PKCE, emissor em `https://kc.<dominio>/realms/oris`, console admin bloqueado na internet). No LDAP, o ORIS só **sincroniza** usuários e grupos para as tabelas locais; o **login** de pessoas do diretório é pelo OIDC.
+
+```bash
+cd ~/oris && git pull
+sh docker/ldap/gerar-certs.sh docker/ldap/certs
+printf 'LDAP_ADMIN_PASSWORD=%s\nKC_ADMIN_PASSWORD=%s\nOIDC_CLIENT_SECRET=%s\n' "$(openssl rand -hex 16)" "$(openssl rand -hex 16)" "$(openssl rand -hex 24)" >> .env.aws
+set -a; . ./.env.aws; set +a; python3 docker/keycloak/gerar-realm.py
+sudo docker compose -f docker-compose.aws.yml -f docker-compose.idp.yml --env-file .env.aws up -d --build
+```
+
+Sincronizar o LDAP e conferir:
+
+```bash
+sudo docker compose -f docker-compose.aws.yml -f docker-compose.idp.yml --env-file .env.aws exec app flask --app run sincronizar-ldap --simular
+sudo docker compose -f docker-compose.aws.yml -f docker-compose.idp.yml --env-file .env.aws exec app flask --app run sincronizar-ldap
+```
+
+Login OIDC: na tela de login, o botão de login institucional leva ao Keycloak (`oidc.admin@oris.example`, `oidc.gestao`, `oidc.saude`, `oidc.gestor`, todos com a senha `ORIS_DEMO_SENHA`; `oidc.semgrupo` deve ser **negado**).
+
+Validação do LDAP: o `sincronizar-ldap` foi executado contra um OpenLDAP 2.5 real (STARTTLS + CA própria): 4 usuários criados com o perfil do grupo, 1 sem grupo ignorado, 2ª execução sem alterações, CA errada recusada, conexão sem TLS recusada.
