@@ -87,7 +87,10 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    SESSION_COOKIE_SECURE = True  # exige HTTPS em produção
+    # Exige HTTPS em produção. So desliga se SESSION_COOKIE_SECURE=false for
+    # definido de forma EXPLICITA (ex.: demonstracao em http://localhost via
+    # Docker). Sem a variavel, o padrao seguro (True) vale.
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "true").strip().lower() != "false"
 
 
 class TestingConfig(Config):
