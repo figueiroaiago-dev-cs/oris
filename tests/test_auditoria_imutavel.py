@@ -135,3 +135,21 @@ def test_triggers_de_situacao_continuam_gravando_na_trilha(conexao):
         cur.execute("UPDATE unidades SET situacao = %s WHERE id = %s", (nova, unidade["id"]))
         cur.execute("SELECT COUNT(*) AS n FROM auditorias WHERE acao = 'TRG_UNIDADE_SITUACAO'")
         assert cur.fetchone()["n"] == antes + 1
+
+
+@mysql
+def test_trigger_de_situacao_grava_a_origem_ip(conexao):
+    """A origem (IP) informada na sessao chega a trilha gravada pelo trigger."""
+    with conexao.cursor() as cur:
+        cur.execute("SELECT id, situacao FROM unidades ORDER BY id LIMIT 1")
+        unidade = cur.fetchone()
+        if unidade is None:
+            pytest.skip("sem unidades no banco")
+        nova = "INATIVA" if unidade["situacao"] != "INATIVA" else "ATIVA"
+        cur.execute("SET @oris_origem_ip = %s", ("198.51.100.99",))
+        cur.execute("UPDATE unidades SET situacao = %s WHERE id = %s", (nova, unidade["id"]))
+        cur.execute("SELECT origem_ip, resultado FROM auditorias WHERE acao = 'TRG_UNIDADE_SITUACAO' "
+                    "ORDER BY id DESC LIMIT 1")
+        linha = cur.fetchone()
+        assert linha["origem_ip"] == "198.51.100.99"
+        assert linha["resultado"] == "SUCESSO"

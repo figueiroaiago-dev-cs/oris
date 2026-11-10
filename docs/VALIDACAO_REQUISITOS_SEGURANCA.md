@@ -8,13 +8,14 @@ Detalhe de cada achado: `docs/SEGURANCA.md` (SEC-016 a SEC-022).
 | Tema | Situação | Evidência |
 |---|---|---|
 | Autenticação OIDC (assinatura, `exp`, `iat`, `iss`, `aud`, `nonce`, PKCE) | **Atende** (testado com provedor simulado) | `app/services/oidc_service.py`, `tests/test_oidc_assinatura.py` (12 testes) |
+| Audit trail: quem, o quê, quando, **de onde (IP)** e **resultado**, incluindo login falho | **Atende** (IP é o da requisição; atrás de proxy/Docker mostra o do proxy) | `tests/test_auditoria_origem_resultado.py`, SEC-021 |
 | Trilha de auditoria imutável | **Atende com limite** (TRUNCATE/DROP não disparam trigger; restringir privilégios do usuário do banco) | `database/etapa05_objetos.sql`, `tests/test_auditoria_imutavel.py` |
 | Integridade com hash (SHA-256) | **Atende em parte** (verificação ativa só no upload ao S3; na importação o hash é só evidência) | `app/utils/integridade.py`, `tests/test_integridade_sha256.py` |
 | Criptografia de arquivos exportados (S3) | **Atende** no código (SSE-S3 AES256, URL pré-assinada) | `app/services/armazenamento_service.py` |
 | Senhas, CSRF, RBAC, rate limit | **Atende** (já existente) | `docs/SEGURANCA.md` |
 | MFA | **Não atende** | SEC-019, pendente (SR2) |
 | HTTPS/HSTS/redirecionamento | **Não atende** (depende do deploy) | SEC-020 |
-| Origem (IP) na auditoria | **Não atende** | SEC-021 |
+| Retenção de 1 ano | **Política documentada** (a aplicação nunca apaga; expurgo é do DBA) | `docs/SEGURANCA.md` |
 | Criptografia em repouso do MySQL | **Fora da aplicação** (ambiente de hospedagem) | SEC-022 |
 
 ## O que ainda não foi validado

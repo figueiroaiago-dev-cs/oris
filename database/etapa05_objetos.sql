@@ -261,11 +261,11 @@ BEGIN
         SET v_usuario = COALESCE(@oris_usuario_id, (SELECT MIN(id) FROM usuarios));
         IF v_usuario IS NOT NULL THEN
             INSERT INTO auditorias
-                (usuario_id, acao, tabela, registro_id, descricao, valor_anterior, valor_novo, data_hora)
+                (usuario_id, acao, tabela, registro_id, descricao, valor_anterior, valor_novo, origem_ip, data_hora)
             VALUES
                 (v_usuario, 'TRG_EQUIPAMENTO_SITUACAO', 'equipamentos', NEW.id,
                  CONCAT('Trigger: situacao do equipamento "', NEW.nome, '" mudou'),
-                 OLD.situacao, NEW.situacao, UTC_TIMESTAMP());
+                 OLD.situacao, NEW.situacao, @oris_origem_ip, UTC_TIMESTAMP());
         END IF;
     END IF;
 END $$
@@ -281,11 +281,11 @@ BEGIN
         SET v_usuario = COALESCE(@oris_usuario_id, (SELECT MIN(id) FROM usuarios));
         IF v_usuario IS NOT NULL THEN
             INSERT INTO auditorias
-                (usuario_id, acao, tabela, registro_id, descricao, valor_anterior, valor_novo, data_hora)
+                (usuario_id, acao, tabela, registro_id, descricao, valor_anterior, valor_novo, origem_ip, data_hora)
             VALUES
                 (v_usuario, 'TRG_UNIDADE_SITUACAO', 'unidades', NEW.id,
                  CONCAT('Trigger: situacao da unidade "', NEW.nome, '" mudou'),
-                 OLD.situacao, NEW.situacao, UTC_TIMESTAMP());
+                 OLD.situacao, NEW.situacao, @oris_origem_ip, UTC_TIMESTAMP());
         END IF;
     END IF;
 END $$

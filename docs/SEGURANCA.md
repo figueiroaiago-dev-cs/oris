@@ -44,7 +44,7 @@ validação de entrada, tratamento de erros, secrets e dependências.
 | SEC-018 | Nenhuma verificação de integridade com hash genérico (SHA-256) em importação e exportação | BAIXO | **Corrigido em parte** - exportação ao S3 envia `ChecksumSHA256` (o S3 recusa objeto corrompido) e metadado; download traz `X-Content-SHA256`; importação grava o hash do arquivo na auditoria (evidência, sem checksum do remetente para comparar) (`tests/test_integridade_sha256.py`) |
 | SEC-019 | Sem autenticação multifator (MFA) | MÉDIO | **Não corrigido** - fora do escopo desta etapa; pendência para a próxima entrega (TOTP) ou delegar ao provedor OIDC da Prefeitura |
 | SEC-020 | Sem `Strict-Transport-Security` e sem redirecionamento HTTP→HTTPS; o cookie só é `Secure` com `ProductionConfig` | MÉDIO | **Não corrigido** - depende do deploy (item "colocar no ar: HTTPS" do grupo); recomenda-se terminar TLS no proxy reverso e adicionar HSTS |
-| SEC-021 | A trilha de auditoria não registra a origem (IP) da ação | BAIXO | **Não corrigido** - exige nova coluna e cuidado com proxy reverso (`X-Forwarded-For` só é confiável atrás de proxy conhecido) |
+| SEC-021 | A trilha de auditoria não registrava a origem (IP), o resultado (sucesso/falha) nem as tentativas de login que falham (que não têm usuário vinculado) - três dos cinco elementos obrigatórios de um audit trail (quem, o quê, quando, **de onde**, **resultado**) | MÉDIO | **Corrigido** - colunas `origem_ip`, `resultado` e `identificador_tentado`; `usuario_id` passou a aceitar NULL; falhas de login (senha errada, usuário inexistente/inativo, conta de diretório, OIDC) e bloqueios por excesso de tentativas viram `LOGIN_FALHA`/`LOGIN_BLOQUEADO`; os triggers também gravam o IP; a tela de auditoria exibe e filtra por resultado (`tests/test_auditoria_origem_resultado.py`, 9 testes + 1 de banco). A senha digitada nunca é gravada e o motivo real da falha só aparece na trilha, nunca para quem tenta o login. **Limites:** o IP é o `remote_addr` da requisição - atrás de proxy reverso ou Docker ele mostra o IP do proxy/gateway, até configurar o proxy confiável (não usamos `X-Forwarded-For` sem proxy conhecido, pois é forjável); um atacante pode encher a trilha com tentativas, mitigado pelo rate limit de login |
 | SEC-022 | Criptografia em repouso do MySQL não é feita pela aplicação | INFORMATIVO | **Não aplicável ao código** - depende do disco/volume criptografado ou do TDE do MySQL no ambiente de hospedagem; o S3 já usa SSE-S3 (AES256) |
 | - | RBAC de todas as rotas (`/usuarios`, `/auditoria`, `/alteracoes`, `/unidades`, `/servicos`, `/equipamentos`, `/importacao`, `/dashboard`) | - | Revisado - todas as rotas mutáveis usam `roles_required` com o(s) perfil(is) corretos; nenhuma rota depende só de esconder o link do menu |
 | - | API REST v1 (`/api/v1/*`, somente leitura) | - | Revisado - todos os endpoints de dados exigem sessão válida **e usuário ativo** (401 em JSON); métodos de escrita não existem; paginação limitada a 200 itens; filtros `situacao` validados por whitelist (400). **Decisão a confirmar com o grupo:** qualquer perfil autenticado lê a API (não há RBAC por perfil na leitura); como ela expõe só dados da rede e nenhum dado pessoal, foi mantido assim |
@@ -100,6 +100,12 @@ feita.
 - **LGPD/proteção de dados:** ver seção correspondente no
   `README.md` - finalidade, minimização, retenção e página de
   transparência (`/privacidade`).
+
+## Política de retenção da trilha de auditoria
+
+- Prazo mínimo de guarda: **1 ano** (referência do material de Auditoria: Marco Civil da Internet, art. 13, e PCI DSS; a LGPD exige guardar apenas o necessário - revisar com o encarregado de dados).
+- A aplicação **não apaga nem altera** registros (triggers `trg_auditorias_bu`/`trg_auditorias_bd`). Arquivamento ou expurgo após o prazo é tarefa do administrador do banco, fora da aplicação, com backup testado antes (pendência de SR2).
+- O identificador digitado em logins falhos pode conter dado pessoal (e-mail): tratar a trilha como dado pessoal (acesso restrito a ADMINISTRADOR e GESTAO_INFORMACAO).
 
 ## Limitações conhecidas (dependem do ambiente de produção)
 
