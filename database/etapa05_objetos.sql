@@ -291,6 +291,35 @@ BEGIN
 END $$
 
 -- =====================================================================
+-- AUDITORIA IMUTAVEL (append-only)
+-- =====================================================================
+-- A trilha so aceita INSERT e SELECT: UPDATE e DELETE em auditorias sao
+-- barrados pelo proprio banco (SIGNAL 45000 -> erro 1644), e nao apenas pela
+-- ausencia de rota na aplicacao. Os triggers acima so fazem INSERT, entao
+-- continuam funcionando.
+-- Limite conhecido: TRUNCATE e DROP TABLE nao disparam triggers. Por isso o
+-- usuario do banco usado pelo ORIS nao deve ter os privilegios DROP, ALTER
+-- nem TRIGGER (ver docs/SEGURANCA.md, SEC-014).
+
+DROP TRIGGER IF EXISTS trg_auditorias_bu $$
+
+CREATE TRIGGER trg_auditorias_bu BEFORE UPDATE ON auditorias
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'auditorias e imutavel: UPDATE nao e permitido';
+END $$
+
+DROP TRIGGER IF EXISTS trg_auditorias_bd $$
+
+CREATE TRIGGER trg_auditorias_bd BEFORE DELETE ON auditorias
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'auditorias e imutavel: DELETE nao e permitido';
+END $$
+
+-- =====================================================================
 -- VIEWS
 -- =====================================================================
 
