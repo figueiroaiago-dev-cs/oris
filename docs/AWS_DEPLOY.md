@@ -39,3 +39,10 @@ Abrir `https://<ORIS_DOMAIN>`. A primeira emissão do certificado leva ~1 minuto
 - O **Learner Lab desliga o servidor** ao fim da sessão (~4 h). Ao religar, o IP elástico e os dados continuam; os contêineres sobem sozinhos (`restart: unless-stopped`).
 - Os usuários `@oris.example` usam a senha de `ORIS_DEMO_SENHA`, nunca a do repositório.
 - SSH aberto para o mundo (porta 22) é aceitável só durante o laboratório; restringir ao seu IP depois.
+
+## Validação da implantação (10/11/2026)
+
+- Contêineres `db` (healthy), `app` (healthy) e `caddy` em execução; certificado Let's Encrypt emitido.
+- HTTPS com HSTS; senha pública dos usuários demo recusada; login falho registrado na auditoria.
+- S3: bucket privado com versionamento e SSE-S3; exportação pelo ORIS gerou URL pré-assinada; acesso direto ao objeto retornou `AccessDenied`.
+- Pendente: LDAP e OIDC reais; restringir o SSH; testar o religamento do servidor após o fim da sessão do laboratório.
