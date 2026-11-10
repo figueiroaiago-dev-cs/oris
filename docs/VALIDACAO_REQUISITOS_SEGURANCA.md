@@ -7,7 +7,7 @@ Detalhe de cada achado: `docs/SEGURANCA.md` (SEC-016 a SEC-022).
 
 | Tema | Situação | Evidência |
 |---|---|---|
-| Autenticação OIDC (assinatura, `exp`, `iat`, `iss`, `aud`, `nonce`, PKCE) | **Atende** (testado com provedor simulado) | `app/services/oidc_service.py`, `tests/test_oidc_assinatura.py` (12 testes) |
+| Autenticação OIDC (assinatura, `exp`, `iat`, `iss`, `aud`, `nonce`, PKCE) | **Atende e validado em Keycloak real** (AWS, 10/11/2026) + testes automatizados com provedor simulado | `app/services/oidc_service.py`, `tests/test_oidc_assinatura.py` (12 testes) |
 | Audit trail: quem, o quê, quando, **de onde (IP)** e **resultado**, incluindo login falho | **Atende** (IP é o da requisição; atrás de proxy/Docker mostra o do proxy) | `tests/test_auditoria_origem_resultado.py`, SEC-021 |
 | Trilha de auditoria imutável | **Atende com limite** (TRUNCATE/DROP não disparam trigger; restringir privilégios do usuário do banco) | `database/etapa05_objetos.sql`, `tests/test_auditoria_imutavel.py` |
 | Integridade com hash (SHA-256) | **Atende em parte** (verificação ativa só no upload ao S3; na importação o hash é só evidência) | `app/utils/integridade.py`, `tests/test_integridade_sha256.py` |
@@ -18,9 +18,16 @@ Detalhe de cada achado: `docs/SEGURANCA.md` (SEC-016 a SEC-022).
 | Retenção de 1 ano | **Política documentada** (a aplicação nunca apaga; expurgo é do DBA) | `docs/SEGURANCA.md` |
 | Criptografia em repouso do MySQL | **Fora da aplicação** (ambiente de hospedagem) | SEC-022 |
 
+## Evidências na AWS (10/11/2026)
+
+- LDAP: 4 usuários criados com perfil do grupo; execução repetida sem alterações; usuário sem grupo ignorado.
+- OIDC: login SSO de ADMINISTRADOR e GESTOR; acesso registrado na auditoria com IP e origem.
+- S3: arquivo exportado, criptografado (SSE-S3), acesso direto negado (`AccessDenied`).
+- HTTPS com HSTS; senha pública dos usuários demo recusada.
+
 ## O que ainda não foi validado
 
-- **S3 real: validado.** LDAP e OIDC contra servidores **reais**: ainda não (os testes usam simulações).
+- **S3, LDAP e OIDC reais: validados** (10/11/2026): S3 privado com URL pré-assinada; `sincronizar-ldap` contra OpenLDAP real (STARTTLS + CA própria); login SSO contra Keycloak real. Os testes automatizados continuam usando simulações.
 - Triggers testados em MariaDB 10.6; falta rodar em MySQL 8 (`ORIS_TEST_MYSQL=1 pytest tests/test_auditoria_imutavel.py`).
 - Feedback de usuários reais: ainda não coletado; só há o retorno de um colega do grupo.
 - Itens de SR2 (CNES, backup testado, hospedagem) ainda não tratados.

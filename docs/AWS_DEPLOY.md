@@ -45,7 +45,8 @@ Abrir `https://<ORIS_DOMAIN>`. A primeira emissão do certificado leva ~1 minuto
 - Contêineres `db` (healthy), `app` (healthy) e `caddy` em execução; certificado Let's Encrypt emitido.
 - HTTPS com HSTS; senha pública dos usuários demo recusada; login falho registrado na auditoria.
 - S3: bucket privado com versionamento e SSE-S3; exportação pelo ORIS gerou URL pré-assinada; acesso direto ao objeto retornou `AccessDenied`.
-- Pendente: LDAP e OIDC reais; restringir o SSH; testar o religamento do servidor após o fim da sessão do laboratório.
+- LDAP real: `sincronizar-ldap` criou 4 usuários e a repetição não alterou nada. OIDC real: login SSO como ADMINISTRADOR e GESTOR contra o Keycloak.
+- Pendente: restringir o SSH; testar o religamento do servidor após o fim da sessão do laboratório.
 
 ## LDAP e OIDC reais (Requisito 3 do professor)
 
